@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SecureLens Settings</title>
+  <style>
+    :root {
+      --bg: #0F1117;
+      --bg-card: #1A1D27;
+      --text: #E8ECF4;
+      --text-sec: #8B92A8;
+      --accent: #6366F1;
+      --border: rgba(255,255,255,0.06);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 40px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .subtitle { color: var(--text-sec); margin-bottom: 32px; }
+    .section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .section h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; color: var(--text-sec); margin-bottom: 6px; }
+    .field input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: 14px; }
+    .toggle-desc { font-size: 12px; color: var(--text-sec); }
+    .toggle {
+      width: 44px; height: 24px;
+      background: #333;
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .toggle.on { background: var(--accent); }
+    .toggle::after {
+      content: '';
+      width: 18px; height: 18px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 3px; left: 3px;
+      transition: 0.2s;
+    }
+    .toggle.on::after { left: 23px; }
+    .btn-save {
+      display: inline-flex;
+      padding: 10px 24px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-save:hover { opacity: 0.9; }
+    .status { font-size: 13px; color: #10B981; margin-top: 12px; display: none; }
+  </style>
+</head>
+<body>
+  <h1>⚙️ SecureLens Settings</h1>
+  <p class="subtitle">Configure your security analysis preferences</p>
+
+  <div class="section">
+    <h2>API Configuration</h2>
+    <div class="field">
+      <label>SentinelX API Base URL</label>
+      <input type="url" id="apiUrl" value="http://localhost:8000/api/v1" />
+    </div>
+    <div class="field">
+      <label>API Key (optional)</label>
+      <input type="password" id="apiKey" placeholder="Enter API key..." />
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Analysis Settings</h2>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Auto-analyze pages</div>
+        <div class="toggle-desc">Automatically scan pages when they load</div>
+      </div>
+      <div class="toggle on" id="toggleAutoAnalyze"></div>
+    </div>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Show badge on tab</div>
+        <div class="toggle-desc">Display security score on browser tab icon</div>
+      </div>
+      <div class="toggle on" id="toggleBadge"></div>
+    </div>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Tech fingerprinting</div>
+        <div class="toggle-desc">Detect frameworks and technologies used by sites</div>
+      </div>
+      <div class="toggle on" id="toggleTech"></div>
+    </div>
+  </div>
+
+  <button class="btn-save" id="saveBtn">Save Settings</button>
+  <p class="status" id="status">✓ Settings saved successfully!</p>
+
+  <script>
+    // Toggle handling
+    document.querySelectorAll('.toggle').forEach(toggle => {
+      toggle.addEventListener('click', () => toggle.classList.toggle('on'));
+    });
+
+    // Save settings
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const settings = {
+        apiUrl: document.getElementById('apiUrl').value,
+        apiKey: document.getElementById('apiKey').value,
+        autoAnalyze: document.getElementById('toggleAutoAnalyze').classList.contains('on'),
+        showBadge: document.getElementById('toggleBadge').classList.contains('on'),
+        techFingerprint: document.getElementById('toggleTech').classList.contains('on'),
+      };
+      chrome.storage.local.set({ securelens_settings: settings }, () => {
+        const status = document.getElementById('status');
+        status.style.display = 'block';
+        setTimeout(() => status.style.display = 'none', 3000);
+      });
+    });
+
+    // Load saved settings
+    chrome.storage.local.get('securelens_settings', (data) => {
+      if (data.securelens_settings) {
+        const s = data.securelens_settings;
+        document.getElementById('apiUrl').value = s.apiUrl || '';
+        document.getElementById('apiKey').value = s.apiKey || '';
+        if (!s.autoAnalyze) document.getElementById('toggleAutoAnalyze').classList.remove('on');
+        if (!s.showBadge) document.getElementById('toggleBadge').classList.remove('on');
+        if (!s.techFingerprint) document.getElementById('toggleTech').classList.remove('on');
+      }
+    });
+  </script>
+</body>
+</html>

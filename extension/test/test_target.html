@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureLens Security Audit Test Target</title>
+  <!-- Intentionally lacking Content-Security-Policy & Strict-Transport-Security -->
+  <meta name="description" content="A live testbed for the SentinelX SecureLens browser extension analyzer.">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0B0E14;
+      color: #E8ECF4;
+      padding: 40px;
+      line-height: 1.6;
+    }
+    .card {
+      background: #151A28;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .badge-vuln {
+      background: rgba(239, 68, 68, 0.15);
+      color: #EF4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-safe {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10B981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    button {
+      background: #6366F1;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+  <!-- Tech Fingerprint markers for SecureLens to detect -->
+  <script>window.jQuery = true;</script>
+</head>
+<body data-reactroot="">
+  <h1>🛡️ SecureLens Extension Test Target</h1>
+  <p>This page contains simulated security vulnerabilities and technology signatures to test SecureLens extension detection.</p>
+
+  <div class="card">
+    <h2>1. Insecure Cookie Simulation</h2>
+    <p>Click below to inject simulated session cookies that lack <code>HttpOnly</code> and <code>Secure</code> flags.</p>
+    <button onclick="injectInsecureCookies()">Inject Test Cookies</button>
+    <span id="cookie-status" style="margin-left: 12px; font-size: 13px; color: #10B981;"></span>
+  </div>
+
+  <div class="card">
+    <h2>2. Header Vulnerabilities Tested</h2>
+    <ul>
+      <li><span class="badge-vuln">FAIL</span> Missing <code>Content-Security-Policy (CSP)</code></li>
+      <li><span class="badge-vuln">FAIL</span> Missing <code>X-Frame-Options</code> (Clickjacking vulnerable)</li>
+      <li><span class="badge-vuln">FAIL</span> Missing <code>Strict-Transport-Security (HSTS)</code></li>
+      <li><span class="badge-vuln">FAIL</span> Missing <code>X-Content-Type-Options</code></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>3. Detected Technology Fingerprints</h2>
+    <p>SecureLens should detect the following framework signatures on this page:</p>
+    <ul>
+      <li><span class="badge-safe">DETECTABLE</span> React (via <code>[data-reactroot]</code>)</li>
+      <li><span class="badge-safe">DETECTABLE</span> jQuery (via <code>window.jQuery</code>)</li>
+    </ul>
+  </div>
+
+  <script>
+    function injectInsecureCookies() {
+      document.cookie = "session_id=insecure_token_abc123; path=/; SameSite=None";
+      document.cookie = "user_pref=theme_dark; path=/";
+      document.getElementById("cookie-status").innerText = "✓ Insecure cookies injected. Open SecureLens popup to inspect!";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+# SentinelX WAF Rules — Path Traversal & Command Injection
+
+rules:
+  # ──── Path Traversal ────
+  - id: "TRAVERSAL-001"
+    name: "Path Traversal - Directory Traversal"
+    description: "Detects directory traversal attempts using ../ and ..\\ sequences"
+    category: "path_traversal"
+    severity: "high"
+    action: "block"
+    priority: 10
+    conditions:
+      match_type: "regex"
+      targets: ["path", "query_params", "body"]
+      patterns:
+        - "(\\.\\./){2,}"
+        - "(\\.\\.\\\\){2,}"
+        - "(?i)(\\.\\./\\.\\./)"
+        - "(?i)(\\.\\.\\\\\\.\\.\\\\)"
+        - "(?i)(%2e%2e%2f|%2e%2e/|\\.\\.%2f)"
+        - "(?i)(%2e%2e%5c|%2e%2e\\\\|\\.\\.%5c)"
+        - "(?i)(%252e%252e%252f)"
+    metadata:
+      tags: ["owasp-a01", "path-traversal", "lfi"]
+
+  - id: "TRAVERSAL-002"
+    name: "Path Traversal - Sensitive File Access"
+    description: "Detects attempts to access common sensitive system files"
+    category: "path_traversal"
+    severity: "critical"
+    action: "block"
+    priority: 5
+    conditions:
+      match_type: "regex"
+      targets: ["path", "query_params"]
+      patterns:
+        - "(?i)(/etc/(passwd|shadow|hosts|group|sudoers))"
+        - "(?i)(/(windows|winnt)?/?(system32|system|repair)/)"
+        - "(?i)(/proc/self/(environ|cmdline|fd))"
+        - "(?i)(wp-config\\.php|web\\.config|\\.env|\\.git/)"
+        - "(?i)(\\.htaccess|\\.htpasswd)"
+    metadata:
+      tags: ["owasp-a01", "path-traversal", "sensitive-files"]
+
+  # ──── Command Injection ────
+  - id: "CMDI-001"
+    name: "Command Injection - Shell Metacharacters"
+    description: "Detects command injection via shell metacharacters"
+    category: "cmd_injection"
+    severity: "critical"
+    action: "block"
+    priority: 10
+    conditions:
+      match_type: "regex"
+      targets: ["query_params", "body"]
+      patterns:
+        - "(?i)(;\\s*(ls|cat|whoami|id|uname|pwd|wget|curl|nc|bash|sh|python|perl|ruby|php)\\b)"
+        - "(?i)(\\|\\s*(ls|cat|whoami|id|uname|pwd|wget|curl|nc|bash|sh)\\b)"
+        - "(?i)(&&\\s*(ls|cat|whoami|id|uname|pwd|wget|curl|nc|bash|sh)\\b)"
+        - "(?i)(\\$\\(.*\\))"
+        - "(?i)(`[^`]+`)"
+    metadata:
+      references:
+        - "https://owasp.org/www-community/attacks/Command_Injection"
+      tags: ["owasp-a03", "command-injection", "rce"]
+
+  - id: "CMDI-002"
+    name: "Command Injection - System Command Patterns"
+    description: "Detects common system command patterns in input"
+    category: "cmd_injection"
+    severity: "high"
+    action: "block"
+    priority: 15
+    conditions:
+      match_type: "regex"
+      targets: ["query_params", "body"]
+      patterns:
+        - "(?i)(\\b(exec|system|passthru|popen|proc_open|shell_exec|eval)\\s*\\()"
+        - "(?i)(\\b(wget|curl|fetch)\\s+https?://)"
+        - "(?i)(\\bchmod\\s+[0-7]{3,4}\\s)"
+        - "(?i)(\\b(rm|del|erase)\\s+(-rf?\\s+)?/)"
+        - "(?i)(/dev/(tcp|udp)/)"
+        - "(?i)(\\bnc\\s+-[lp])"
+    metadata:
+      tags: ["owasp-a03", "command-injection", "system-commands"]

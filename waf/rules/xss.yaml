@@ -1,0 +1,73 @@
+# SentinelX WAF Rules — XSS Detection
+
+rules:
+  - id: "XSS-001"
+    name: "XSS - Script Tag Injection"
+    description: "Detects script tag injection attempts"
+    category: "xss"
+    severity: "high"
+    action: "block"
+    priority: 10
+    conditions:
+      match_type: "regex"
+      targets: ["query_params", "body", "path", "headers"]
+      patterns:
+        - "(?i)(<\\s*script[^>]*>)"
+        - "(?i)(<\\s*/\\s*script\\s*>)"
+        - "(?i)(<\\s*script[^>]*src\\s*=)"
+    metadata:
+      references:
+        - "https://owasp.org/www-community/attacks/xss/"
+      tags: ["owasp-a03", "xss", "script"]
+
+  - id: "XSS-002"
+    name: "XSS - Event Handler Injection"
+    description: "Detects inline event handler injection"
+    category: "xss"
+    severity: "high"
+    action: "block"
+    priority: 10
+    conditions:
+      match_type: "regex"
+      targets: ["query_params", "body", "path"]
+      patterns:
+        - "(?i)(\\bon(error|load|click|mouseover|focus|blur|submit|change|input|keydown|keyup|keypress|mousedown|mouseup|dblclick|contextmenu|drag|drop)\\s*=)"
+        - "(?i)(\\bonfocus\\s*=\\s*['\"])"
+        - "(?i)(\\bonload\\s*=\\s*['\"])"
+    metadata:
+      tags: ["owasp-a03", "xss", "event-handler"]
+
+  - id: "XSS-003"
+    name: "XSS - JavaScript Protocol"
+    description: "Detects javascript: protocol injection in attributes"
+    category: "xss"
+    severity: "high"
+    action: "block"
+    priority: 10
+    conditions:
+      match_type: "regex"
+      targets: ["query_params", "body", "path"]
+      patterns:
+        - "(?i)(javascript\\s*:)"
+        - "(?i)(vbscript\\s*:)"
+        - "(?i)(livescript\\s*:)"
+        - "(?i)(data\\s*:\\s*text/html)"
+    metadata:
+      tags: ["owasp-a03", "xss", "protocol"]
+
+  - id: "XSS-004"
+    name: "XSS - HTML Injection"
+    description: "Detects HTML element injection attempts"
+    category: "xss"
+    severity: "medium"
+    action: "block"
+    priority: 20
+    conditions:
+      match_type: "regex"
+      targets: ["query_params", "body"]
+      patterns:
+        - "(?i)(<\\s*(iframe|object|embed|applet|form|input|button|textarea|select|marquee|bgsound|video|audio|source|svg|math|base|link|meta|style)[^>]*>)"
+        - "(?i)(<\\s*img[^>]+src\\s*=\\s*['\"]?\\s*javascript:)"
+        - "(?i)(<\\s*svg[^>]*on\\w+\\s*=)"
+    metadata:
+      tags: ["owasp-a03", "xss", "html-injection"]

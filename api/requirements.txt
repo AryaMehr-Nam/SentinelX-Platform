@@ -1,0 +1,58 @@
+# SentinelX API Dependencies
+# Python 3.13+
+
+# ──── Web Framework ────
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# ──── Database ────
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.1
+greenlet==3.1.1
+
+# ──── Redis ────
+redis[hiredis]==5.2.1
+
+# ──── Elasticsearch ────
+elasticsearch[async]==8.17.0
+
+# ──── Authentication ────
+pyjwt[crypto]==2.10.1
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.1
+python-jose[cryptography]==3.3.0
+
+# ──── Validation & Settings ────
+pydantic==2.10.4
+pydantic-settings==2.7.1
+email-validator==2.2.0
+
+# ──── Celery ────
+celery[redis]==5.4.0
+
+# ──── HTTP Client ────
+httpx==0.28.1
+aiohttp==3.11.11
+
+# ──── YAML Parsing ────
+pyyaml==6.0.2
+
+# ──── Security ────
+python-dotenv==1.0.1
+
+# ──── Logging ────
+structlog==24.4.0
+
+# ──── GeoIP ────
+geoip2==4.8.1
+
+# ──── Testing ────
+pytest==8.3.4
+pytest-asyncio==0.25.0
+pytest-cov==6.0.0
+httpx==0.28.1
+
+# ──── Linting ────
+ruff==0.8.6

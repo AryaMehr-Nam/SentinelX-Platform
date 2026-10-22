@@ -1,0 +1,82 @@
+# SentinelX WAF Rules — SQL Injection Detection
+# Sigma-like rule format
+
+rules:
+  - id: "SQLI-001"
+    name: "SQL Injection - UNION SELECT"
+    description: "Detects UNION-based SQL injection attempts in query parameters, body, and path"
+    category: "sqli"
+    severity: "critical"
+    action: "block"
+    priority: 10
+    conditions:
+      match_type: "regex"
+      targets: ["query_params", "body", "path"]
+      patterns:
+        - "(?i)(union(\\s+|%20)+(all(\\s+|%20)+)?select)"
+        - "(?i)(select(\\s+|%20)+.*(\\s+|%20)+from(\\s+|%20)+information_schema)"
+        - "(?i)(select(\\s+|%20)+.*(\\s+|%20)+from(\\s+|%20)+pg_)"
+        - "(?i)(union(\\s+|%20)+select(\\s+|%20)+null)"
+    metadata:
+      references:
+        - "https://owasp.org/www-community/attacks/SQL_Injection"
+      tags: ["owasp-a03", "sqli", "union"]
+
+  - id: "SQLI-002"
+    name: "SQL Injection - Boolean Blind"
+    description: "Detects boolean-based blind SQL injection patterns"
+    category: "sqli"
+    severity: "critical"
+    action: "block"
+    priority: 10
+    conditions:
+      match_type: "regex"
+      targets: ["query_params", "body", "path"]
+      patterns:
+        - "(?i)(\\bor\\b\\s+['\"]?\\d+['\"]?\\s*=\\s*['\"]?\\d+)"
+        - "(?i)(\\band\\b\\s+['\"]?\\d+['\"]?\\s*=\\s*['\"]?\\d+)"
+        - "(?i)('\\s*(or|and)\\s+'[^']*'\\s*=\\s*')"
+        - "(?i)(\\bor\\b\\s+1\\s*=\\s*1)"
+        - "(?i)(\\band\\b\\s+1\\s*=\\s*1)"
+    metadata:
+      references:
+        - "https://owasp.org/www-community/attacks/Blind_SQL_Injection"
+      tags: ["owasp-a03", "sqli", "blind"]
+
+  - id: "SQLI-003"
+    name: "SQL Injection - Stacked Queries"
+    description: "Detects stacked SQL query injection attempts"
+    category: "sqli"
+    severity: "critical"
+    action: "block"
+    priority: 10
+    conditions:
+      match_type: "regex"
+      targets: ["query_params", "body"]
+      patterns:
+        - "(?i)(;\\s*(drop|alter|create|truncate|insert|update|delete)\\s)"
+        - "(?i)(;\\s*select\\s)"
+        - "(?i)(drop\\s+table\\s)"
+        - "(?i)(alter\\s+table\\s)"
+        - "(?i)(truncate\\s+table\\s)"
+    metadata:
+      tags: ["owasp-a03", "sqli", "stacked"]
+
+  - id: "SQLI-004"
+    name: "SQL Injection - Comment Evasion"
+    description: "Detects SQL injection using comment-based evasion techniques"
+    category: "sqli"
+    severity: "high"
+    action: "block"
+    priority: 15
+    conditions:
+      match_type: "regex"
+      targets: ["query_params", "body", "path"]
+      patterns:
+        - "(?i)(/\\*.*\\*/)"
+        - "(?i)(--\\s*$)"
+        - "(?i)(#\\s*$)"
+        - "(?i)('\\s*--)"
+        - "(?i)(\\b(benchmark|sleep|waitfor|delay)\\s*\\()"
+    metadata:
+      tags: ["owasp-a03", "sqli", "evasion"]

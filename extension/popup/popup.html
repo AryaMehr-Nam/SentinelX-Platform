@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=380, initial-scale=1.0">
+  <title>SecureLens — Security Analysis</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L3 7V12C3 17.55 6.84 22.74 12 24C17.16 22.74 21 17.55 21 12V7L12 2Z" fill="url(#shield-grad)"/>
+            <path d="M10 15.5L7.5 13L6.09 14.41L10 18.33L18 10.33L16.59 8.92L10 15.5Z" fill="white"/>
+            <defs>
+              <linearGradient id="shield-grad" x1="3" y1="2" x2="21" y2="24" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#6366F1"/>
+                <stop offset="1" stop-color="#8B5CF6"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="logo-text">SecureLens</span>
+        </div>
+        <span class="version">v1.0</span>
+      </div>
+      <button id="refreshBtn" class="icon-btn" title="Re-analyze">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M13.65 2.35A8 8 0 1 0 16 8h-2a6 6 0 1 1-1.76-4.24L10 6h6V0l-2.35 2.35z"/></svg>
+      </button>
+    </header>
+
+    <!-- Score Ring -->
+    <div class="score-section">
+      <div class="score-ring" id="scoreRing">
+        <svg viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" class="score-ring-bg"/>
+          <circle cx="60" cy="60" r="52" class="score-ring-fill" id="scoreCircle" stroke-dasharray="326.73" stroke-dashoffset="326.73"/>
+        </svg>
+        <div class="score-value">
+          <span id="scoreNumber">--</span>
+          <span class="score-label">Score</span>
+        </div>
+      </div>
+      <div class="risk-badge" id="riskBadge">Analyzing...</div>
+      <div class="url-display" id="urlDisplay">Loading...</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="headers">Headers</button>
+      <button class="tab" data-tab="tech">Tech</button>
+      <button class="tab" data-tab="report">Report</button>
+    </div>
+
+    <!-- Tab Content: Overview -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="findings-list" id="findingsList">
+        <div class="loading-skeleton">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content: Headers -->
+    <div class="tab-content" id="tab-headers">
+      <div class="header-checks" id="headerChecks">
+        <div class="loading-skeleton">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content: Technologies -->
+    <div class="tab-content" id="tab-tech">
+      <div class="tech-list" id="techList">
+        <div class="loading-skeleton">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content: Report Threat -->
+    <div class="tab-content" id="tab-report">
+      <div class="report-form">
+        <p class="report-desc">Report this site to the SentinelX threat intelligence database.</p>
+        <select id="threatType" class="form-select">
+          <option value="">Select threat type...</option>
+          <option value="phishing">Phishing</option>
+          <option value="malware">Malware Distribution</option>
+          <option value="scam">Scam / Fraud</option>
+          <option value="spam">Spam</option>
+          <option value="other">Other</option>
+        </select>
+        <textarea id="threatDetails" class="form-textarea" placeholder="Additional details (optional)..." rows="3"></textarea>
+        <button id="reportBtn" class="btn-report">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M1 13L14 7L1 1V5.5L10 7L1 8.5V13Z"/></svg>
+          Submit Report
+        </button>
+        <div id="reportStatus" class="report-status"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>Powered by SentinelX</span>
+      <a href="#" id="optionsLink">Settings</a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
