@@ -213,13 +213,11 @@ def _calculate_risk_score(results: dict) -> float:
 def _update_domain_record(domain_id: str, results: dict, risk_score: float):
     """Update the phishing domain record in the database."""
     try:
-        from sqlalchemy import create_engine
         from sqlalchemy.orm import Session
+        from api.core.database import build_sync_engine
         from api.models.phishing_domain import PhishingDomain
 
-        # Use sync engine for Celery (Celery workers are synchronous)
-        sync_url = settings.database_url.replace("+asyncpg", "")
-        engine = create_engine(sync_url)
+        engine = build_sync_engine()
 
         with Session(engine) as session:
             domain = session.get(PhishingDomain, uuid.UUID(domain_id))
@@ -242,12 +240,12 @@ def cleanup_expired_blocks():
     """Remove expired IP blocks from the database."""
     logger.info("[Maintenance] Cleaning up expired IP blocks")
     try:
-        from sqlalchemy import create_engine, delete
+        from sqlalchemy import delete
         from sqlalchemy.orm import Session
+        from api.core.database import build_sync_engine
         from api.models.blocked_ip import BlockedIP
 
-        sync_url = settings.database_url.replace("+asyncpg", "")
-        engine = create_engine(sync_url)
+        engine = build_sync_engine()
 
         with Session(engine) as session:
             result = session.execute(

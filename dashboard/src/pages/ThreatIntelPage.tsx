@@ -175,12 +175,18 @@ function fmtRelative(iso: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-function ChartTooltip({ active, payload, label }: any) {
+interface ThreatChartTooltipProps {
+  active?: boolean;
+  payload?: Array<{ dataKey: string; value: number | string; color?: string }>;
+  label?: string;
+}
+
+function ChartTooltip({ active, payload, label }: ThreatChartTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg bg-bg-elevated/95 border border-border px-3 py-2 shadow-xl backdrop-blur-sm">
       <p className="text-xs font-medium text-text-secondary mb-1">{label}</p>
-      {payload.map((p: any) => (
+      {payload.map((p) => (
         <p key={p.dataKey} className="text-xs" style={{ color: p.color }}>
           {p.dataKey}: {p.value}
         </p>
@@ -200,11 +206,13 @@ export default function ThreatIntelPage() {
 
   useEffect(() => {
     threatApi.domains().then((r) => {
-      if (Array.isArray(r.data) && r.data.length) setDomains(r.data);
+      const list = Array.isArray(r.data) ? r.data : r.data?.domains;
+      if (Array.isArray(list) && list.length) setDomains(list);
     }).catch(() => {});
 
     threatApi.aiSummaries().then((r) => {
-      if (Array.isArray(r.data) && r.data.length) setSummaries(r.data);
+      const list = Array.isArray(r.data) ? r.data : r.data?.summaries;
+      if (Array.isArray(list) && list.length) setSummaries(list);
     }).catch(() => {});
   }, []);
 

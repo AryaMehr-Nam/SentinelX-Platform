@@ -88,6 +88,13 @@ async def update_user(
         )
 
     updates = body.model_dump(exclude_unset=True)
+    if "email" in updates and updates["email"] is not None and updates["email"] != user.email:
+        existing = await repo.get_by_email(updates["email"])
+        if existing and existing.id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Email '{updates['email']}' is already registered",
+            )
     if "role" in updates and updates["role"] is not None:
         updates["role"] = updates["role"].value
     updated = await repo.update(user, updates)

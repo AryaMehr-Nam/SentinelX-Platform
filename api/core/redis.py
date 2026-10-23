@@ -38,6 +38,30 @@ class InMemoryPipeline:
         self.commands.append(("expire", (key, seconds), {}))
         return self
 
+    def set(self, key: str, value: Any, ex: int | None = None):
+        self.commands.append(("set", (key, value), {"ex": ex}))
+        return self
+
+    def get(self, key: str):
+        self.commands.append(("get", (key,), {}))
+        return self
+
+    def incr(self, key: str):
+        self.commands.append(("incr", (key,), {}))
+        return self
+
+    def delete(self, *keys: str):
+        self.commands.append(("delete", keys, {}))
+        return self
+
+    def sadd(self, key: str, *members: str):
+        self.commands.append(("sadd", (key, *members), {}))
+        return self
+
+    def srem(self, key: str, *members: str):
+        self.commands.append(("srem", (key, *members), {}))
+        return self
+
     async def execute(self) -> list[Any]:
         results = []
         for cmd, args, kwargs in self.commands:

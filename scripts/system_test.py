@@ -4,12 +4,14 @@ Verifies all live services, authentication flows, API routes, WAF blocking,
 and frontend proxy communication on the running local system.
 """
 
+import os
 import sys
 import time
 import httpx
 
-API_BASE = "http://127.0.0.1:8001/api/v1"
-DASHBOARD_BASE = "http://localhost:5173"
+API_PORT = os.environ.get("SENTINELX_PORT", "8000")
+API_BASE = os.environ.get("API_BASE", f"http://127.0.0.1:{API_PORT}/api/v1")
+DASHBOARD_BASE = os.environ.get("DASHBOARD_URL", "http://localhost:5173")
 
 def run_system_test():
     print("=" * 75)

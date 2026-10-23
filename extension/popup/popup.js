@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initAnalysis();
   initReportForm();
   initRefresh();
+  initOptionsLink();
 });
 
 // ──── Tab Navigation ────
@@ -275,6 +276,20 @@ function initRefresh() {
       }
     });
   });
+}
+
+function initOptionsLink() {
+  const link = document.getElementById("optionsLink");
+  if (link) {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (chrome.runtime.openOptionsPage) {
+        chrome.runtime.openOptionsPage();
+      } else {
+        window.open(chrome.runtime.getURL("popup/options.html"));
+      }
+    });
+  }
 }
 
 // ──── Utilities ────

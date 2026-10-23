@@ -16,16 +16,29 @@ export default function Header({ title, subtitle }: HeaderProps) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click & handle Cmd+K / Ctrl+K shortcut
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
       }
     }
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    }
+
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const notificationCount = 5; // Will be replaced by real data
@@ -70,6 +83,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
         >
           <Search size={15} className="ml-3 text-text-muted shrink-0" />
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Search threats, IPs, rules…"
             onFocus={() => setSearchFocused(true)}

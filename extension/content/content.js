@@ -248,13 +248,26 @@
 
   // ──── Auto-analyze on Load ────
 
-  if (document.readyState === "complete") {
+  function runAutoAnalysis() {
     setTimeout(() => {
       const data = collectSecurityData();
       fetchRealHeaders().then((realHeaders) => {
         data.headers = { ...data.headers, ...realHeaders };
-        chrome.runtime.sendMessage({ type: "ANALYZE_PAGE", data });
+        chrome.runtime.sendMessage({ type: "ANALYZE_PAGE", data }, (result) => {
+          if (result) {
+            chrome.storage.local.set({
+              [`analysis_${data.url}`]: result,
+              lastAnalysis: result,
+            });
+          }
+        });
       });
     }, 1000);
+  }
+
+  if (document.readyState === "complete") {
+    runAutoAnalysis();
+  } else {
+    window.addEventListener("load", runAutoAnalysis, { once: true });
   }
 })();

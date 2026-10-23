@@ -51,6 +51,29 @@ def _build_engine(database_url: str):
     )
 
 
+def get_sync_database_url(database_url: str | None = None) -> str:
+    """Derive a synchronous database URL for Celery workers and background tasks."""
+    url = database_url or settings.database_url
+    if "sqlite" in url:
+        return url.replace("+aiosqlite", "")
+    return url.replace("+asyncpg", "")
+
+
+def build_sync_engine():
+    """Create a synchronous SQLAlchemy engine with SQLite fallback."""
+    from sqlalchemy import create_engine
+    sync_url = get_sync_database_url()
+    try:
+        engine = create_engine(sync_url)
+        # Test connection
+        with engine.connect():
+            pass
+        return engine
+    except Exception as exc:
+        logger.warning(f"Could not initialize sync engine for {sync_url}: {exc}. Defaulting to SQLite.")
+        return create_engine("sqlite:///./sentinelx.db")
+
+
 engine = _build_engine(settings.database_url)
 
 async_session_factory = async_sessionmaker(

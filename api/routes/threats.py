@@ -47,10 +47,10 @@ async def list_phishing_domains(
     status_filter: str | None = Query(None, alias="status"),
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=20, ge=1, le=100),
-    current_user: dict = Depends(require_role(UserRole.ANALYST)),
+    current_user: dict = Depends(require_role(UserRole.VIEWER)),
     db: AsyncSession = Depends(get_db),
 ):
-    """List reported phishing domains (Analyst+)."""
+    """List reported phishing domains (Viewer+)."""
     service = ThreatService(db)
     domains, total = await service.get_phishing_domains(
         status_filter=status_filter, page=page, per_page=per_page

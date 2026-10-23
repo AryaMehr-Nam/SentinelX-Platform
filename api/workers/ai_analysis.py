@@ -313,12 +313,11 @@ def _store_analysis(
 ) -> None:
     """Store the AI analysis results in the database."""
     try:
-        from sqlalchemy import create_engine
         from sqlalchemy.orm import Session
+        from api.core.database import build_sync_engine
         from api.models.ai_threat_summary import AIThreatSummary
 
-        sync_url = settings.database_url.replace("+asyncpg", "")
-        engine = create_engine(sync_url)
+        engine = build_sync_engine()
 
         with Session(engine) as session:
             summary = AIThreatSummary(

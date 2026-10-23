@@ -305,3 +305,149 @@ class TestProtectedRoutesAndWAFAPI:
         assert "total_requests_24h" in overview
         assert "global_risk_score" in overview
 
+
+class TestDatabaseAndRedisFallbacks:
+    """Tests for database URL translation, sync engine creation, and fallback Redis pipeline."""
+
+    def test_sync_database_urls(self):
+        """Database URL conversion should correctly map async dialects to sync drivers."""
+        from api.core.database import get_sync_database_url
+
+        assert (
+            get_sync_database_url("postgresql+asyncpg://user:pass@localhost:5432/db")
+            == "postgresql://user:pass@localhost:5432/db"
+        )
+        assert (
+            get_sync_database_url("sqlite+aiosqlite:///test.db")
+            == "sqlite:///test.db"
+        )
+        assert get_sync_database_url("sqlite:///test.db") == "sqlite:///test.db"
+
+    def test_build_sync_engine(self):
+        """build_sync_engine should construct an operational sync SQLAlchemy engine."""
+        from api.core.database import build_sync_engine
+        from sqlalchemy import text
+
+        engine = build_sync_engine()
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT 1")).scalar()
+            assert result == 1
+
+    @pytest.mark.asyncio
+    async def test_in_memory_pipeline_extended(self):
+        """InMemoryPipeline should support set, get, incr, sadd, srem, delete in batch."""
+        from api.core.redis import InMemoryRedisFallback
+
+        redis = InMemoryRedisFallback()
+        pipe = redis.pipeline()
+        pipe.set("counter", 10)
+        pipe.incr("counter")
+        pipe.sadd("blocked_ips", "192.168.1.100", "10.0.0.1")
+        pipe.get("counter")
+        results = await pipe.execute()
+
+        assert results[0] is True
+        assert results[1] == 11
+        assert results[2] == 2
+        assert results[3] == "11"
+
+        pipe2 = redis.pipeline()
+        pipe2.srem("blocked_ips", "10.0.0.1")
+        pipe2.delete("counter")
+        results2 = await pipe2.execute()
+        assert results2[0] == 1
+        assert results2[1] == 1
+        assert await redis.get("counter") is None
+
+
+class TestThreatIntelligenceAndUsers:
+    """Tests for threat intel reporting, role-based access to domains, and user email conflict detection."""
+
+    def test_report_threat_endpoint(self, client):
+        """Public endpoint should allow browser extension to submit threat reports."""
+        payload = {
+            "url": "https://secure-login-update-account.phish.test/login",
+            "risk_score": 85,
+            "threat_type": "phishing",
+            "details": {"heuristic": "suspicious_login_form", "entropy": 4.8},
+        }
+        res = client.post("/api/v1/threats/report", json=payload)
+        assert res.status_code == 201
+        data = res.json()
+        assert data["domain"] == "secure-login-update-account.phish.test"
+        assert data["risk_score"] == 85
+        assert data["threat_intel_data"]["heuristic"] == "suspicious_login_form"
+        assert data["status"] == "pending"
+
+    def test_viewer_access_and_user_conflict(self, client):
+        """Viewer role should be able to view threat domains, and duplicate emails should yield 409."""
+        settings = get_settings()
+
+        # 1. Admin login
+        admin_login = client.post(
+            "/api/v1/auth/login",
+            json={"email": settings.admin_email, "password": settings.admin_password},
+        )
+        assert admin_login.status_code == 200
+        admin_token = admin_login.json()["access_token"]
+        admin_headers = {"Authorization": f"Bearer {admin_token}"}
+
+        import uuid
+
+        # 2. Create viewer user
+        v_email = f"viewer_{uuid.uuid4().hex[:8]}@sentinelx.security"
+        v_pass = "ViewerPass123!"
+        v_res = client.post(
+            "/api/v1/users/",
+            headers=admin_headers,
+            json={
+                "email": v_email,
+                "password": v_pass,
+                "full_name": "SOC Viewer Test",
+                "role": "viewer",
+            },
+        )
+        assert v_res.status_code == 201
+
+        # 3. Create analyst user
+        a_email = f"analyst_{uuid.uuid4().hex[:8]}@sentinelx.security"
+        a_pass = "AnalystPass123!"
+        a_res = client.post(
+            "/api/v1/users/",
+            headers=admin_headers,
+            json={
+                "email": a_email,
+                "password": a_pass,
+                "full_name": "SOC Analyst Test",
+                "role": "analyst",
+            },
+        )
+        assert a_res.status_code == 201
+        analyst_id = a_res.json()["id"]
+
+        # 4. Attempt to update analyst's email to viewer's email -> Expect HTTP 409 Conflict
+        patch_res = client.patch(
+            f"/api/v1/users/{analyst_id}",
+            headers=admin_headers,
+            json={"email": v_email},
+        )
+        assert patch_res.status_code == 409
+        assert "already registered" in patch_res.json()["detail"]
+
+        # 5. Viewer logs in and verifies access to /threats/domains (Viewer+ role)
+        v_login = client.post(
+            "/api/v1/auth/login",
+            json={"email": v_email, "password": v_pass},
+        )
+        assert v_login.status_code == 200
+        v_token = v_login.json()["access_token"]
+        v_headers = {"Authorization": f"Bearer {v_token}"}
+
+        threats_res = client.get("/api/v1/threats/domains", headers=v_headers)
+        assert threats_res.status_code == 200
+        threats_data = threats_res.json()
+        assert "domains" in threats_data
+        assert isinstance(threats_data["domains"], list)
+        assert threats_data["total"] >= 1
+
+
