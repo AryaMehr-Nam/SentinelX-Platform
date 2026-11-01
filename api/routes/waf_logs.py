@@ -3,7 +3,7 @@ SentinelX — WAF Log & Rule Management Routes
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -113,8 +113,8 @@ async def list_waf_rules(
                     "patterns": r.patterns,
                     "metadata": r.metadata,
                 },
-                created_at=datetime.now(),
-                updated_at=datetime.now(),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             )
             for r in engine_rules
         ]

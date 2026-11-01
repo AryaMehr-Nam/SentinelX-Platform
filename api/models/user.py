@@ -4,7 +4,7 @@ SentinelX — User Model
 
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, String, text
+from sqlalchemy import Boolean, DateTime, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.core.database import Base
@@ -23,6 +23,7 @@ class User(Base):
         Boolean, nullable=False, default=True, server_default=text("true")
     )
     updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC),
         nullable=True,

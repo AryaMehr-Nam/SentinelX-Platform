@@ -8,7 +8,7 @@ import uuid
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 
-from sqlalchemy import MetaData, func
+from sqlalchemy import DateTime, MetaData, func
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -93,11 +93,16 @@ class Base(DeclarativeBase):
 
     metadata = metadata
 
+    type_annotation_map = {
+        datetime: DateTime(timezone=True),
+    }
+
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True,
         default=uuid.uuid4,
     )
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         server_default=func.now(),
     )

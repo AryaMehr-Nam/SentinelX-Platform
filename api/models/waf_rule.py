@@ -6,7 +6,7 @@ Stores WAF rule definitions in the database for dynamic management.
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from api.core.database import Base
@@ -24,6 +24,7 @@ class WAFRule(Base):
     priority: Mapped[int] = mapped_column(Integer, nullable=False, default=50)
     action: Mapped[str] = mapped_column(String(20), nullable=False, default="block")
     updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC),
         nullable=True,
