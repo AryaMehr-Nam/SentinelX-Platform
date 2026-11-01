@@ -49,7 +49,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U sentinelx"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -83,6 +83,7 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           JWT_SECRET_KEY: test-secret-key
           APP_ENV: testing
+          PYTHONPATH: .
         run: |
           python -m pytest -v --cov=api --cov=waf --cov-report=xml
 
