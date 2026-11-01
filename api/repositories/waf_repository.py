@@ -4,16 +4,17 @@ Data access layer for WAF logs, rules, and blocked IPs.
 """
 
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any, Sequence
+from collections.abc import Sequence
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from sqlalchemy import func, select, and_, desc
+from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.models.ai_threat_summary import AIThreatSummary
+from api.models.blocked_ip import BlockedIP
 from api.models.waf_log import WAFLog
 from api.models.waf_rule import WAFRule
-from api.models.blocked_ip import BlockedIP
-from api.models.ai_threat_summary import AIThreatSummary
 
 
 class WAFLogRepository:
@@ -29,9 +30,7 @@ class WAFLogRepository:
         return log
 
     async def get_by_id(self, log_id: uuid.UUID) -> WAFLog | None:
-        result = await self.session.execute(
-            select(WAFLog).where(WAFLog.id == log_id)
-        )
+        result = await self.session.execute(select(WAFLog).where(WAFLog.id == log_id))
         return result.scalar_one_or_none()
 
     async def get_recent(
@@ -62,9 +61,7 @@ class WAFLogRepository:
 
         where_clause = and_(*conditions) if conditions else True
 
-        count_result = await self.session.execute(
-            select(func.count(WAFLog.id)).where(where_clause)
-        )
+        count_result = await self.session.execute(select(func.count(WAFLog.id)).where(where_clause))
         total = count_result.scalar_one()
 
         offset = (page - 1) * per_page
@@ -80,7 +77,7 @@ class WAFLogRepository:
 
     async def get_stats_24h(self) -> dict[str, Any]:
         """Get aggregated statistics for the last 24 hours."""
-        since = datetime.now(timezone.utc) - timedelta(hours=24)
+        since = datetime.now(UTC) - timedelta(hours=24)
 
         total_result = await self.session.execute(
             select(func.count(WAFLog.id)).where(WAFLog.created_at >= since)
@@ -101,9 +98,7 @@ class WAFLogRepository:
             .group_by(WAFLog.threat_type)
             .order_by(desc(func.count(WAFLog.id)))
         )
-        threat_types = [
-            {"type": row[0], "count": row[1]} for row in type_result.all()
-        ]
+        threat_types = [{"type": row[0], "count": row[1]} for row in type_result.all()]
 
         # Severity distribution
         severity_result = await self.session.execute(
@@ -121,9 +116,7 @@ class WAFLogRepository:
             .order_by(desc(func.count(WAFLog.id)))
             .limit(10)
         )
-        top_countries = [
-            {"country": row[0], "count": row[1]} for row in country_result.all()
-        ]
+        top_countries = [{"country": row[0], "count": row[1]} for row in country_result.all()]
 
         # Hourly trend (last 24 hours) - dialect aware
         bind = self.session.bind
@@ -144,7 +137,10 @@ class WAFLogRepository:
             .order_by("hour")
         )
         trend = [
-            {"time": row[0].isoformat() if hasattr(row[0], "isoformat") else str(row[0]), "count": row[1]}
+            {
+                "time": row[0].isoformat() if hasattr(row[0], "isoformat") else str(row[0]),
+                "count": row[1],
+            }
             for row in trend_result.all()
         ]
 
@@ -172,9 +168,7 @@ class WAFRuleRepository:
         return result.scalars().all()
 
     async def get_by_rule_id(self, rule_id: str) -> WAFRule | None:
-        result = await self.session.execute(
-            select(WAFRule).where(WAFRule.rule_id == rule_id)
-        )
+        result = await self.session.execute(select(WAFRule).where(WAFRule.rule_id == rule_id))
         return result.scalar_one_or_none()
 
     async def create(self, rule: WAFRule) -> WAFRule:
@@ -203,9 +197,7 @@ class BlockedIPRepository:
         self.session = session
 
     async def get_all(self) -> Sequence[BlockedIP]:
-        result = await self.session.execute(
-            select(BlockedIP).order_by(desc(BlockedIP.created_at))
-        )
+        result = await self.session.execute(select(BlockedIP).order_by(desc(BlockedIP.created_at)))
         return result.scalars().all()
 
     async def get_by_ip(self, ip_address: str) -> BlockedIP | None:
@@ -221,7 +213,7 @@ class BlockedIPRepository:
             return False
         if entry.is_permanent:
             return True
-        if entry.blocked_until and entry.blocked_until < datetime.now(timezone.utc):
+        if entry.blocked_until and entry.blocked_until < datetime.now(UTC):
             # Block has expired, remove it
             await self.session.delete(entry)
             await self.session.flush()
@@ -267,8 +259,6 @@ class AIThreatSummaryRepository:
 
     async def get_recent(self, limit: int = 20) -> Sequence[AIThreatSummary]:
         result = await self.session.execute(
-            select(AIThreatSummary)
-            .order_by(desc(AIThreatSummary.created_at))
-            .limit(limit)
+            select(AIThreatSummary).order_by(desc(AIThreatSummary.created_at)).limit(limit)
         )
         return result.scalars().all()

@@ -2,7 +2,7 @@
 SentinelX — Health Check Route
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter
 
@@ -20,5 +20,5 @@ async def health_check():
         "app": settings.app_name,
         "version": settings.app_version,
         "environment": settings.app_env,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }

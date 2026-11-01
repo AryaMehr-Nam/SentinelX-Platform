@@ -69,9 +69,7 @@ class SlidingWindowRateLimiter:
             # Fail open — don't block if Redis is down
             return False, max_requests
 
-    async def get_limit_info(
-        self, identifier: str, window_seconds: int
-    ) -> dict[str, Any]:
+    async def get_limit_info(self, identifier: str, window_seconds: int) -> dict[str, Any]:
         """Get rate limit information for an identifier."""
         try:
             key = f"sentinelx:rate_limit:{identifier}"

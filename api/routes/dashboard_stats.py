@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.core.database import get_db
-from api.core.security import require_role, UserRole
+from api.core.security import UserRole, require_role
 from api.repositories.waf_repository import BlockedIPRepository, WAFLogRepository
 from api.schemas.threat import DashboardOverview
 from api.services.threat_service import ThreatService

@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.core.database import get_db
-from api.core.security import get_current_user, require_role, UserRole
+from api.core.security import UserRole, require_role
 from api.models.blocked_ip import BlockedIP
 from api.models.waf_rule import WAFRule
 from api.repositories.waf_repository import (
@@ -20,7 +20,6 @@ from api.repositories.waf_repository import (
 from api.schemas.waf import (
     BlockedIPCreate,
     BlockedIPResponse,
-    WAFLogFilter,
     WAFLogListResponse,
     WAFLogResponse,
     WAFRuleCreate,
@@ -95,6 +94,7 @@ async def list_waf_rules(
     rules = await repo.get_all(enabled_only=enabled_only)
     if not rules:
         from waf.engine import get_rule_engine
+
         engine = get_rule_engine()
         engine_rules = engine.get_all_rules()
         return [

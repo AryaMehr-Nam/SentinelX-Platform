@@ -5,20 +5,19 @@ Main application entry point with middleware stack, lifecycle events, and route 
 
 import logging
 import sys
-from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.gzip import GZipMiddleware
 
 from api.core.config import get_settings
 from api.core.database import close_db, init_db
-from api.core.redis import close_redis, init_redis
 from api.core.elasticsearch import close_elasticsearch, init_elasticsearch
+from api.core.redis import close_redis, init_redis
 
 settings = get_settings()
 
@@ -35,8 +34,9 @@ logger = logging.getLogger("sentinelx")
 
 # ──── Application Lifecycle ────
 
+
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Manage startup and shutdown events."""
     logger.info(f"Starting {settings.app_name} v{settings.app_version}")
     logger.info(f"Environment: {settings.app_env}")
@@ -69,14 +69,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 async def _seed_admin_user() -> None:
     """Create the default admin user if it doesn't exist."""
     from api.core.database import async_session_factory
+    from api.core.security import UserRole, hash_password
     from api.repositories.user_repository import UserRepository
-    from api.core.security import hash_password, UserRole
 
     async with async_session_factory() as session:
         repo = UserRepository(session)
         existing = await repo.get_by_email(settings.admin_email)
         if existing is None:
             from api.models.user import User
+
             admin = User(
                 email=settings.admin_email,
                 hashed_password=hash_password(settings.admin_password),
@@ -94,6 +95,7 @@ async def _seed_admin_user() -> None:
 async def _seed_waf_rules() -> None:
     """Seed WAF rules from YAML files into the database if empty."""
     from pathlib import Path
+
     from api.core.database import async_session_factory
     from api.models.waf_rule import WAFRule
     from api.repositories.waf_repository import WAFRuleRepository
@@ -129,6 +131,7 @@ async def _seed_waf_rules() -> None:
 
 # ──── App Factory ────
 
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     application = FastAPI(
@@ -159,6 +162,7 @@ def create_app() -> FastAPI:
     # WAF Middleware (only if enabled)
     if settings.waf_enabled:
         from waf.middleware import WAFMiddleware
+
         application.add_middleware(WAFMiddleware)
 
     # ──── Exception Handlers ────
@@ -200,12 +204,12 @@ def create_app() -> FastAPI:
 
 def _register_routes(app: FastAPI) -> None:
     """Register all API route modules."""
-    from api.routes.health import router as health_router
     from api.routes.auth import router as auth_router
+    from api.routes.dashboard_stats import router as dashboard_stats_router
+    from api.routes.health import router as health_router
+    from api.routes.threats import router as threats_router
     from api.routes.users import router as users_router
     from api.routes.waf_logs import router as waf_logs_router
-    from api.routes.threats import router as threats_router
-    from api.routes.dashboard_stats import router as dashboard_stats_router
     from api.routes.websocket import router as ws_router
 
     api_prefix = "/api/v1"

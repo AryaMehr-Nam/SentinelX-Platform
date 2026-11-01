@@ -4,15 +4,14 @@ JWT token management, password hashing, and RBAC enforcement.
 """
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from functools import wraps
 from typing import Any
 
+import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-import bcrypt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.core.config import get_settings
@@ -53,7 +52,7 @@ def create_token(
     extra_claims: dict[str, Any] | None = None,
 ) -> str:
     """Create a JWT token with the given subject and type."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if token_type == TokenType.ACCESS:
         expires_delta = timedelta(minutes=settings.jwt_access_token_expire_minutes)
@@ -182,6 +181,7 @@ def require_role(minimum_role: UserRole):
     Dependency factory that enforces minimum role level.
     Usage: Depends(require_role(UserRole.ANALYST))
     """
+
     async def role_checker(
         current_user: dict[str, Any] = Depends(get_current_user),
     ) -> dict[str, Any]:

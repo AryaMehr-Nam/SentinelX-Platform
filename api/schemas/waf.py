@@ -34,6 +34,7 @@ class ActionTaken(StrEnum):
 
 # ──── WAF Log Schemas ────
 
+
 class WAFLogResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -67,6 +68,7 @@ class WAFLogFilter(BaseModel):
 
 
 # ──── WAF Rule Schemas ────
+
 
 class WAFRuleCreate(BaseModel):
     rule_id: str = Field(..., min_length=1, max_length=50, pattern=r"^[A-Z0-9\-]+$")
@@ -105,6 +107,7 @@ class WAFRuleResponse(BaseModel):
 
 
 # ──── Blocked IP Schemas ────
+
 
 class BlockedIPCreate(BaseModel):
     ip_address: str = Field(..., min_length=7, max_length=45)

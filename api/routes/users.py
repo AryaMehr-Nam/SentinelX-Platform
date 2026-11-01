@@ -4,13 +4,13 @@ SentinelX — User Management Routes
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.core.database import get_db
-from api.core.security import get_current_user, require_role, UserRole, hash_password
+from api.core.security import UserRole, get_current_user, hash_password, require_role
 from api.repositories.user_repository import UserRepository
-from api.schemas.user import UserCreate, UserUpdate, UserResponse, UserListResponse
+from api.schemas.user import UserCreate, UserListResponse, UserResponse, UserUpdate
 
 router = APIRouter()
 
@@ -60,6 +60,7 @@ async def create_user(
         )
 
     from api.models.user import User
+
     user = User(
         email=body.email,
         hashed_password=hash_password(body.password),

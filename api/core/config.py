@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     def parse_cors_origins(cls, v: Any) -> list[str]:
         if isinstance(v, str):
             import json
+
             try:
                 return json.loads(v)
             except (json.JSONDecodeError, TypeError):

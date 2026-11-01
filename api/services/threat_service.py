@@ -4,7 +4,7 @@ Business logic for threat reporting and phishing domain management.
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -75,6 +75,7 @@ class ThreatService:
         # Dispatch async threat intel lookup via Celery
         try:
             from api.workers.threat_intel import analyze_domain
+
             analyze_domain.delay(str(phishing.id), domain)
         except Exception:
             pass  # Celery may not be running in all environments
@@ -100,16 +101,12 @@ class ThreatService:
 
         offset = (page - 1) * per_page
         result = await self.session.execute(
-            query.order_by(PhishingDomain.created_at.desc())
-            .offset(offset)
-            .limit(per_page)
+            query.order_by(PhishingDomain.created_at.desc()).offset(offset).limit(per_page)
         )
         domains = list(result.scalars().all())
         return domains, total
 
-    async def update_domain_status(
-        self, domain_id: uuid.UUID, new_status: str
-    ) -> PhishingDomain:
+    async def update_domain_status(self, domain_id: uuid.UUID, new_status: str) -> PhishingDomain:
         """Update the review status of a reported domain."""
         result = await self.session.execute(
             select(PhishingDomain).where(PhishingDomain.id == domain_id)
@@ -121,7 +118,7 @@ class ThreatService:
                 detail="Domain report not found",
             )
         domain.status = new_status
-        domain.reviewed_at = datetime.now(timezone.utc)
+        domain.reviewed_at = datetime.now(UTC)
         await self.session.flush()
         await self.session.refresh(domain)
         return domain

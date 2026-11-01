@@ -18,6 +18,7 @@ class UserRole(StrEnum):
 
 class UserCreate(BaseModel):
     """Schema for creating a new user."""
+
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     full_name: str = Field(..., min_length=1, max_length=255)
@@ -26,6 +27,7 @@ class UserCreate(BaseModel):
 
 class UserUpdate(BaseModel):
     """Schema for updating an existing user."""
+
     email: EmailStr | None = None
     full_name: str | None = Field(None, min_length=1, max_length=255)
     role: UserRole | None = None
@@ -34,6 +36,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(BaseModel):
     """Schema for user response (excludes password)."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
@@ -47,6 +50,7 @@ class UserResponse(BaseModel):
 
 class UserListResponse(BaseModel):
     """Paginated user list response."""
+
     users: list[UserResponse]
     total: int
     page: int

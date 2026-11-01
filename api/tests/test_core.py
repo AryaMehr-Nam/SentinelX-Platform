@@ -6,8 +6,9 @@ and IP management capabilities.
 
 import pytest
 from starlette.testclient import TestClient
-from api.main import create_app
+
 from api.core.config import get_settings
+from api.main import create_app
 
 
 @pytest.fixture(scope="module")
@@ -41,12 +42,14 @@ class TestWAFEngine:
         engine = RuleEngine()
         engine.load_rules_from_directory()
 
-        result = engine.evaluate({
-            "query_params": "id=1 UNION SELECT * FROM users",
-            "body": "",
-            "path": "/api/test",
-            "headers": "",
-        })
+        result = engine.evaluate(
+            {
+                "query_params": "id=1 UNION SELECT * FROM users",
+                "body": "",
+                "path": "/api/test",
+                "headers": "",
+            }
+        )
         assert result is not None
         assert result.matched is True
         assert result.category == "sqli"
@@ -58,12 +61,14 @@ class TestWAFEngine:
         engine = RuleEngine()
         engine.load_rules_from_directory()
 
-        result = engine.evaluate({
-            "query_params": "name=<script>alert(1)</script>",
-            "body": "",
-            "path": "/api/test",
-            "headers": "",
-        })
+        result = engine.evaluate(
+            {
+                "query_params": "name=<script>alert(1)</script>",
+                "body": "",
+                "path": "/api/test",
+                "headers": "",
+            }
+        )
         assert result is not None
         assert result.matched is True
         assert result.category == "xss"
@@ -75,12 +80,14 @@ class TestWAFEngine:
         engine = RuleEngine()
         engine.load_rules_from_directory()
 
-        result = engine.evaluate({
-            "query_params": "",
-            "body": "",
-            "path": "/api/../../etc/passwd",
-            "headers": "",
-        })
+        result = engine.evaluate(
+            {
+                "query_params": "",
+                "body": "",
+                "path": "/api/../../etc/passwd",
+                "headers": "",
+            }
+        )
         assert result is not None
         assert result.matched is True
         assert result.category == "path_traversal"
@@ -92,12 +99,14 @@ class TestWAFEngine:
         engine = RuleEngine()
         engine.load_rules_from_directory()
 
-        result = engine.evaluate({
-            "query_params": "",
-            "body": "hostname; cat /etc/passwd",
-            "path": "/api/test",
-            "headers": "",
-        })
+        result = engine.evaluate(
+            {
+                "query_params": "",
+                "body": "hostname; cat /etc/passwd",
+                "path": "/api/test",
+                "headers": "",
+            }
+        )
         assert result is not None
         assert result.matched is True
         assert result.category == "cmd_injection"
@@ -109,12 +118,14 @@ class TestWAFEngine:
         engine = RuleEngine()
         engine.load_rules_from_directory()
 
-        result = engine.evaluate({
-            "query_params": "search=hello+world&page=1",
-            "body": '{"username": "john", "email": "john@example.com"}',
-            "path": "/api/users",
-            "headers": "content-type:application/json",
-        })
+        result = engine.evaluate(
+            {
+                "query_params": "search=hello+world&page=1",
+                "body": '{"username": "john", "email": "john@example.com"}',
+                "path": "/api/users",
+                "headers": "content-type:application/json",
+            }
+        )
         assert result is None
 
     def test_rule_loading(self):
@@ -177,20 +188,28 @@ class TestRateLimiterAndIPManager:
         limiter = SlidingWindowRateLimiter(redis)
 
         # 3 requests allowed in 10 second window
-        is_limited, rem1 = await limiter.is_rate_limited("client-1", max_requests=3, window_seconds=10)
+        is_limited, rem1 = await limiter.is_rate_limited(
+            "client-1", max_requests=3, window_seconds=10
+        )
         assert is_limited is False
         assert rem1 == 2
 
-        is_limited, rem2 = await limiter.is_rate_limited("client-1", max_requests=3, window_seconds=10)
+        is_limited, rem2 = await limiter.is_rate_limited(
+            "client-1", max_requests=3, window_seconds=10
+        )
         assert is_limited is False
         assert rem2 == 1
 
-        is_limited, rem3 = await limiter.is_rate_limited("client-1", max_requests=3, window_seconds=10)
+        is_limited, rem3 = await limiter.is_rate_limited(
+            "client-1", max_requests=3, window_seconds=10
+        )
         assert is_limited is False
         assert rem3 == 0
 
         # 4th request must be rate-limited
-        is_limited, rem4 = await limiter.is_rate_limited("client-1", max_requests=3, window_seconds=10)
+        is_limited, rem4 = await limiter.is_rate_limited(
+            "client-1", max_requests=3, window_seconds=10
+        )
         assert is_limited is True
         assert rem4 == 0
 
@@ -240,10 +259,13 @@ class TestAuthenticationSecurity:
         settings = get_settings()
 
         # Valid login
-        response = client.post("/api/v1/auth/login", json={
-            "email": settings.admin_email,
-            "password": settings.admin_password,
-        })
+        response = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": settings.admin_email,
+                "password": settings.admin_password,
+            },
+        )
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data
@@ -251,10 +273,13 @@ class TestAuthenticationSecurity:
         assert data.get("token_type") == "bearer"
 
         # Invalid login
-        bad_response = client.post("/api/v1/auth/login", json={
-            "email": settings.admin_email,
-            "password": "wrong-password",
-        })
+        bad_response = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": settings.admin_email,
+                "password": "wrong-password",
+            },
+        )
         assert bad_response.status_code == 401
 
 
@@ -272,10 +297,13 @@ class TestProtectedRoutesAndWAFAPI:
         settings = get_settings()
 
         # 1. Login to get token
-        login_res = client.post("/api/v1/auth/login", json={
-            "email": settings.admin_email,
-            "password": settings.admin_password,
-        })
+        login_res = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": settings.admin_email,
+                "password": settings.admin_password,
+            },
+        )
         assert login_res.status_code == 200
         token = login_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
@@ -317,16 +345,14 @@ class TestDatabaseAndRedisFallbacks:
             get_sync_database_url("postgresql+asyncpg://user:pass@localhost:5432/db")
             == "postgresql://user:pass@localhost:5432/db"
         )
-        assert (
-            get_sync_database_url("sqlite+aiosqlite:///test.db")
-            == "sqlite:///test.db"
-        )
+        assert get_sync_database_url("sqlite+aiosqlite:///test.db") == "sqlite:///test.db"
         assert get_sync_database_url("sqlite:///test.db") == "sqlite:///test.db"
 
     def test_build_sync_engine(self):
         """build_sync_engine should construct an operational sync SQLAlchemy engine."""
-        from api.core.database import build_sync_engine
         from sqlalchemy import text
+
+        from api.core.database import build_sync_engine
 
         engine = build_sync_engine()
         with engine.connect() as conn:
@@ -449,5 +475,3 @@ class TestThreatIntelligenceAndUsers:
         assert "domains" in threats_data
         assert isinstance(threats_data["domains"], list)
         assert threats_data["total"] >= 1
-
-

@@ -4,7 +4,7 @@ Async Elasticsearch connection for security log ingestion and search.
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 try:
@@ -37,8 +37,7 @@ async def get_elasticsearch() -> Any | None:
             logger.info(f"Elasticsearch connected: {info['version']['number']}")
         except Exception as e:
             logger.warning(
-                f"Elasticsearch unavailable: {e}. "
-                "Log ingestion will fall back to PostgreSQL only."
+                f"Elasticsearch unavailable: {e}. Log ingestion will fall back to PostgreSQL only."
             )
             _es_client = None
     return _es_client
@@ -67,7 +66,10 @@ async def init_elasticsearch() -> None:
                         "source_ip": {"type": "ip"},
                         "country_code": {"type": "keyword"},
                         "request_method": {"type": "keyword"},
-                        "request_path": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
+                        "request_path": {
+                            "type": "text",
+                            "fields": {"keyword": {"type": "keyword"}},
+                        },
                         "request_body": {"type": "text"},
                         "matched_rule_id": {"type": "keyword"},
                         "threat_type": {"type": "keyword"},
@@ -112,7 +114,7 @@ async def index_waf_log(log_data: dict[str, Any]) -> None:
     if es is None:
         return
 
-    log_data["timestamp"] = datetime.now(timezone.utc).isoformat()
+    log_data["timestamp"] = datetime.now(UTC).isoformat()
     try:
         await es.index(
             index=settings.elasticsearch_waf_index,
@@ -128,7 +130,7 @@ async def index_audit_log(log_data: dict[str, Any]) -> None:
     if es is None:
         return
 
-    log_data["timestamp"] = datetime.now(timezone.utc).isoformat()
+    log_data["timestamp"] = datetime.now(UTC).isoformat()
     try:
         await es.index(
             index=settings.elasticsearch_audit_index,

@@ -9,7 +9,7 @@ import json
 import logging
 import random
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -29,7 +29,9 @@ class WebSocketConnectionManager:
         await websocket.accept()
         async with self._lock:
             self.active_connections.append(websocket)
-        logger.info(f"SOC Dashboard connected to live stream (active: {len(self.active_connections)})")
+        logger.info(
+            f"SOC Dashboard connected to live stream (active: {len(self.active_connections)})"
+        )
 
     async def disconnect(self, websocket: WebSocket):
         async with self._lock:
@@ -57,6 +59,7 @@ manager = WebSocketConnectionManager()
 
 # ──── Live WebSocket Endpoint ────
 
+
 @router.websocket("/ws/attack-stream")
 async def attack_stream_ws(websocket: WebSocket):
     """
@@ -66,11 +69,13 @@ async def attack_stream_ws(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         # Send an initial welcome / sync event
-        await websocket.send_json({
-            "type": "SYSTEM_CONNECTED",
-            "message": "Connected to SentinelX Live SOC Stream",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+        await websocket.send_json(
+            {
+                "type": "SYSTEM_CONNECTED",
+                "message": "Connected to SentinelX Live SOC Stream",
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+        )
 
         # Keep connection open and handle any incoming ping/pong from client
         while True:
@@ -78,7 +83,9 @@ async def attack_stream_ws(websocket: WebSocket):
             try:
                 msg = json.loads(data)
                 if msg.get("action") == "ping":
-                    await websocket.send_json({"type": "pong", "timestamp": datetime.now(timezone.utc).isoformat()})
+                    await websocket.send_json(
+                        {"type": "pong", "timestamp": datetime.now(UTC).isoformat()}
+                    )
             except Exception:
                 pass
     except WebSocketDisconnect:
@@ -197,10 +204,12 @@ class AttackSimulator:
                 self.events_generated += 1
 
                 # Broadcast to connected WebSocket dashboards
-                await manager.broadcast({
-                    "type": "ATTACK_EVENT",
-                    "data": event,
-                })
+                await manager.broadcast(
+                    {
+                        "type": "ATTACK_EVENT",
+                        "data": event,
+                    }
+                )
 
                 # Also optionally persist to database if available
                 await self._persist_event(event)
@@ -218,7 +227,7 @@ class AttackSimulator:
 
         return {
             "id": str(uuid.uuid4()),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "source_ip": attacker["ip"],
             "country_code": attacker["country"],
             "threat_type": scenario["threat_type"],
@@ -257,6 +266,7 @@ simulator = AttackSimulator()
 
 
 # ──── Control Endpoints ────
+
 
 @router.post("/simulator/start")
 async def start_simulator(interval: float = 2.5):

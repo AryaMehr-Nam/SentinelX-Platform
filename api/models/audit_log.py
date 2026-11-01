@@ -5,7 +5,7 @@ SentinelX — Audit Log Model
 import uuid
 from typing import Any
 
-from sqlalchemy import ForeignKey, String, Text, JSON
+from sqlalchemy import JSON, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.core.database import Base

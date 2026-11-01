@@ -6,7 +6,7 @@ SQLAlchemy 2.0 async engine and session management with multi-database support (
 import logging
 import uuid
 from collections.abc import AsyncGenerator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import MetaData, func
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -42,7 +42,9 @@ def _build_engine(database_url: str):
                 pool_recycle=3600,
             )
         except Exception as exc:
-            logger.warning(f"Could not initialize engine for {database_url}: {exc}. Defaulting to SQLite.")
+            logger.warning(
+                f"Could not initialize engine for {database_url}: {exc}. Defaulting to SQLite."
+            )
 
     return create_async_engine(
         "sqlite+aiosqlite:///./sentinelx.db",
@@ -62,6 +64,7 @@ def get_sync_database_url(database_url: str | None = None) -> str:
 def build_sync_engine():
     """Create a synchronous SQLAlchemy engine with SQLite fallback."""
     from sqlalchemy import create_engine
+
     sync_url = get_sync_database_url()
     try:
         engine = create_engine(sync_url)
@@ -70,7 +73,9 @@ def build_sync_engine():
             pass
         return engine
     except Exception as exc:
-        logger.warning(f"Could not initialize sync engine for {sync_url}: {exc}. Defaulting to SQLite.")
+        logger.warning(
+            f"Could not initialize sync engine for {sync_url}: {exc}. Defaulting to SQLite."
+        )
         return create_engine("sqlite:///./sentinelx.db")
 
 
@@ -93,12 +98,12 @@ class Base(DeclarativeBase):
         default=uuid.uuid4,
     )
     created_at: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         server_default=func.now(),
     )
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_db() -> AsyncGenerator[AsyncSession]:
     """FastAPI dependency that yields an async database session."""
     async with async_session_factory() as session:
         try:
@@ -119,7 +124,9 @@ async def init_db() -> None:
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        logger.info(f"Database initialized successfully with URL: {settings.database_url.split('@')[-1] if '@' in settings.database_url else settings.database_url}")
+        logger.info(
+            f"Database initialized successfully with URL: {settings.database_url.split('@')[-1] if '@' in settings.database_url else settings.database_url}"
+        )
     except Exception as exc:
         if "sqlite" not in settings.database_url:
             logger.warning(

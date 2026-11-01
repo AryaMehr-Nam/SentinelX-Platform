@@ -4,10 +4,10 @@ Async Redis connection for rate limiting, caching, and IP management with transp
 """
 
 import asyncio
+import builtins
 import logging
 import time
-import builtins
-from typing import Any, Set
+from typing import Any
 
 from api.core.config import get_settings
 
@@ -80,7 +80,7 @@ class InMemoryRedisFallback:
 
     def __init__(self):
         self._strings: dict[str, tuple[str, float | None]] = {}
-        self._sets: dict[str, Set[str]] = {}
+        self._sets: dict[str, set[str]] = {}
         self._zsets: dict[str, dict[str, float]] = {}
         self._lock = asyncio.Lock()
 
@@ -181,7 +181,7 @@ class InMemoryRedisFallback:
             s = self._sets.get(key, builtins.set())
             return member in s
 
-    async def smembers(self, key: str) -> Set[str]:
+    async def smembers(self, key: str) -> builtins.set[str]:
         async with self._lock:
             return builtins.set(self._sets.get(key, builtins.set()))
 
@@ -226,6 +226,7 @@ async def get_redis() -> Any:
     if _redis_instance is None:
         try:
             import redis.asyncio as aioredis
+
             client = aioredis.from_url(
                 settings.redis_url,
                 encoding="utf-8",
@@ -265,6 +266,7 @@ async def close_redis() -> None:
 
 
 # ──── Redis Key Namespaces ────
+
 
 class RedisKeys:
     """Centralized Redis key management to avoid collisions."""

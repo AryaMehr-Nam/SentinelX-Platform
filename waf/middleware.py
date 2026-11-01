@@ -4,7 +4,6 @@ Intercepts all incoming HTTP requests for threat detection.
 Non-blocking, async implementation with zero-copy request inspection.
 """
 
-import json
 import logging
 import time
 import uuid
@@ -60,10 +59,12 @@ class WAFMiddleware(BaseHTTPMiddleware):
         try:
             # Get Redis client (lazy import to avoid circular deps)
             from api.core.redis import get_redis
+
             redis = await get_redis()
 
             # ── Step 1: Whitelist Check ──
             from waf.ip_manager import IPManager
+
             ip_manager = IPManager(redis)
 
             if await ip_manager.is_whitelisted(client_ip):
@@ -80,6 +81,7 @@ class WAFMiddleware(BaseHTTPMiddleware):
 
             # ── Step 3: Rate Limiting ──
             from waf.rate_limiter import SlidingWindowRateLimiter
+
             rate_limiter = SlidingWindowRateLimiter(redis)
 
             is_limited, remaining = await rate_limiter.is_rate_limited(
@@ -108,9 +110,7 @@ class WAFMiddleware(BaseHTTPMiddleware):
             # ── Step 4: GeoIP Check ──
             country_code = await ip_manager.get_country_code(client_ip)
             if await ip_manager.is_country_blocked(country_code):
-                logger.warning(
-                    f"[WAF:{request_id}] Blocked by GeoIP: {client_ip} ({country_code})"
-                )
+                logger.warning(f"[WAF:{request_id}] Blocked by GeoIP: {client_ip} ({country_code})")
                 return self._block_response(
                     "Access denied from your region.",
                     status_code=403,
@@ -121,6 +121,7 @@ class WAFMiddleware(BaseHTTPMiddleware):
             request_data = await self._extract_request_data(request)
 
             from waf.engine import get_rule_engine
+
             engine = get_rule_engine()
             match = engine.evaluate(request_data)
 
@@ -192,7 +193,8 @@ class WAFMiddleware(BaseHTTPMiddleware):
             "path": unquote(str(request.url.path)),
             "query_params": unquote(str(request.url.query)),
             "headers": " ".join(
-                f"{k}:{v}" for k, v in request.headers.items()
+                f"{k}:{v}"
+                for k, v in request.headers.items()
                 if k.lower() not in ("authorization", "cookie")
             ),
             "user_agent": request.headers.get("user-agent", ""),
@@ -271,17 +273,20 @@ class WAFMiddleware(BaseHTTPMiddleware):
             # Also log to Elasticsearch (async, non-blocking)
             try:
                 from api.core.elasticsearch import index_waf_log
-                await index_waf_log({
-                    "source_ip": client_ip,
-                    "country_code": country_code,
-                    "request_method": request.method,
-                    "request_path": str(request.url.path),
-                    "matched_rule_id": matched_rule_id,
-                    "threat_type": threat_type,
-                    "severity": severity,
-                    "action_taken": action,
-                    "user_agent": request.headers.get("user-agent", ""),
-                })
+
+                await index_waf_log(
+                    {
+                        "source_ip": client_ip,
+                        "country_code": country_code,
+                        "request_method": request.method,
+                        "request_path": str(request.url.path),
+                        "matched_rule_id": matched_rule_id,
+                        "threat_type": threat_type,
+                        "severity": severity,
+                        "action_taken": action,
+                        "user_agent": request.headers.get("user-agent", ""),
+                    }
+                )
             except Exception:
                 pass  # ES logging is best-effort
 
@@ -300,6 +305,7 @@ class WAFMiddleware(BaseHTTPMiddleware):
 
         try:
             from api.workers.ai_analysis import analyze_threat
+
             analyze_threat.delay(
                 waf_log_id=waf_log_id,
                 threat_type=match.category,

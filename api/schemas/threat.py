@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ThreatReportCreate(BaseModel):
     """Schema for reporting a threat (from extension or API)."""
+
     url: str = Field(..., min_length=1)
     risk_score: float = Field(..., ge=0, le=100)
     threat_type: str | None = None
@@ -48,8 +49,10 @@ class AIThreatSummaryResponse(BaseModel):
 
 # ──── Dashboard Statistics ────
 
+
 class DashboardOverview(BaseModel):
     """Aggregated metrics for the SOC dashboard overview."""
+
     total_requests_24h: int = 0
     blocked_threats_24h: int = 0
     active_blocked_ips: int = 0
@@ -62,6 +65,7 @@ class DashboardOverview(BaseModel):
 
 class AttackStreamEntry(BaseModel):
     """Single entry in the live attack stream."""
+
     id: uuid.UUID
     timestamp: datetime
     source_ip: str

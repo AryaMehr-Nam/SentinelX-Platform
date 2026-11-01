@@ -11,12 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.core.config import get_settings
 from api.core.security import (
+    TokenType,
     create_access_token,
     create_refresh_token,
     decode_token,
     hash_password,
     verify_password,
-    TokenType,
 )
 from api.models.user import User
 from api.repositories.user_repository import UserRepository

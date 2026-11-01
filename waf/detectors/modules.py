@@ -4,8 +4,8 @@ Individual heuristic detectors for specific attack types.
 These complement the YAML rule engine with more advanced detection logic.
 """
 
-import re
 import logging
+import re
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DetectionResult:
     """Result from a heuristic detector."""
+
     detected: bool
     confidence: float  # 0.0 to 1.0
     category: str
@@ -27,16 +28,46 @@ class SQLiDetector:
 
     # SQL keywords that are suspicious in user input
     SQL_KEYWORDS = {
-        "select", "insert", "update", "delete", "drop", "alter", "create",
-        "truncate", "exec", "execute", "union", "join", "where", "from",
-        "having", "group", "order", "into", "values", "set", "table",
-        "database", "schema", "information_schema", "pg_catalog",
+        "select",
+        "insert",
+        "update",
+        "delete",
+        "drop",
+        "alter",
+        "create",
+        "truncate",
+        "exec",
+        "execute",
+        "union",
+        "join",
+        "where",
+        "from",
+        "having",
+        "group",
+        "order",
+        "into",
+        "values",
+        "set",
+        "table",
+        "database",
+        "schema",
+        "information_schema",
+        "pg_catalog",
     }
 
     # SQL operators and functions
     SQL_OPERATORS = {
-        "or", "and", "not", "like", "between", "in", "exists",
-        "null", "true", "false", "is",
+        "or",
+        "and",
+        "not",
+        "like",
+        "between",
+        "in",
+        "exists",
+        "null",
+        "true",
+        "false",
+        "is",
     }
 
     def detect(self, input_str: str) -> DetectionResult:
@@ -49,7 +80,7 @@ class SQLiDetector:
         reasons = []
 
         # Check for SQL keyword density
-        words = set(re.findall(r'\b\w+\b', lower))
+        words = set(re.findall(r"\b\w+\b", lower))
         keyword_count = len(words & self.SQL_KEYWORDS)
         if keyword_count >= 3:
             score += 0.4
@@ -156,9 +187,7 @@ class XSSDetector:
         detected = confidence >= 0.3
 
         severity = "medium"
-        if confidence >= 0.7:
-            severity = "high"
-        elif confidence >= 0.5:
+        if confidence >= 0.7 or confidence >= 0.5:
             severity = "high"
 
         return DetectionResult(
@@ -175,10 +204,18 @@ class PathTraversalDetector:
     """Advanced path traversal detection."""
 
     SENSITIVE_PATHS = [
-        "/etc/passwd", "/etc/shadow", "/etc/hosts",
-        "wp-config.php", "web.config", ".env", ".git/",
-        ".htaccess", ".htpasswd", "boot.ini",
-        "/proc/self/", "/windows/system32/",
+        "/etc/passwd",
+        "/etc/shadow",
+        "/etc/hosts",
+        "wp-config.php",
+        "web.config",
+        ".env",
+        ".git/",
+        ".htaccess",
+        ".htpasswd",
+        "boot.ini",
+        "/proc/self/",
+        "/windows/system32/",
     ]
 
     def detect(self, input_str: str) -> DetectionResult:
@@ -231,9 +268,27 @@ class CommandInjectionDetector:
     """Advanced command injection detection."""
 
     DANGEROUS_COMMANDS = [
-        "ls", "cat", "whoami", "id", "uname", "pwd", "wget", "curl",
-        "nc", "bash", "sh", "python", "perl", "ruby", "php",
-        "rm", "chmod", "chown", "kill", "nmap", "netcat",
+        "ls",
+        "cat",
+        "whoami",
+        "id",
+        "uname",
+        "pwd",
+        "wget",
+        "curl",
+        "nc",
+        "bash",
+        "sh",
+        "python",
+        "perl",
+        "ruby",
+        "php",
+        "rm",
+        "chmod",
+        "chown",
+        "kill",
+        "nmap",
+        "netcat",
     ]
 
     def detect(self, input_str: str) -> DetectionResult:

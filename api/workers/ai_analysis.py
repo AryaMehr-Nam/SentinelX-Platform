@@ -8,7 +8,6 @@ import json
 import logging
 import time
 import uuid
-from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -232,9 +231,7 @@ def _parse_llm_response(response: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def _fallback_analysis(
-    threat_type: str, severity: str, matched_value: str
-) -> dict[str, Any]:
+def _fallback_analysis(threat_type: str, severity: str, matched_value: str) -> dict[str, Any]:
     """Generate a heuristic-based analysis when LLM is unavailable."""
     classifications = {
         "sqli": "SQL Injection",
@@ -297,11 +294,14 @@ def _fallback_analysis(
         ),
         "estimated_severity": severity,
         "estimated_impact": f"If successful, this {threat_type} attack could lead to unauthorized data access, system compromise, or service disruption.",
-        "mitigation_strategies": mitigations.get(threat_type, [
-            "Investigate the source IP",
-            "Review and strengthen WAF rules",
-            "Update intrusion detection signatures",
-        ]),
+        "mitigation_strategies": mitigations.get(
+            threat_type,
+            [
+                "Investigate the source IP",
+                "Review and strengthen WAF rules",
+                "Update intrusion detection signatures",
+            ],
+        ),
     }
 
 
@@ -314,6 +314,7 @@ def _store_analysis(
     """Store the AI analysis results in the database."""
     try:
         from sqlalchemy.orm import Session
+
         from api.core.database import build_sync_engine
         from api.models.ai_threat_summary import AIThreatSummary
 

@@ -5,7 +5,7 @@ Records every request intercepted by the WAF engine.
 
 from typing import Any
 
-from sqlalchemy import String, Text, Index, JSON
+from sqlalchemy import JSON, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.core.database import Base
@@ -28,12 +28,8 @@ class WAFLog(Base):
     threat_type: Mapped[str] = mapped_column(
         String(30), nullable=False, default="other", index=True
     )
-    severity: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="low", index=True
-    )
-    action_taken: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="logged"
-    )
+    severity: Mapped[str] = mapped_column(String(20), nullable=False, default="low", index=True)
+    action_taken: Mapped[str] = mapped_column(String(20), nullable=False, default="logged")
     raw_headers: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(512), nullable=True)
 

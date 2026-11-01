@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.core.database import get_db
-from api.core.security import get_current_user, require_role, UserRole
+from api.core.security import UserRole, require_role
 from api.schemas.threat import (
     AIThreatSummaryResponse,
     PhishingDomainResponse,
@@ -84,6 +84,7 @@ async def list_ai_summaries(
 ):
     """List recent AI-generated threat analysis summaries."""
     from api.repositories.waf_repository import AIThreatSummaryRepository
+
     repo = AIThreatSummaryRepository(db)
     summaries = await repo.get_recent(limit=limit)
     return [AIThreatSummaryResponse.model_validate(s) for s in summaries]

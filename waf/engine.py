@@ -5,7 +5,6 @@ Loads rules from YAML files and evaluates incoming requests against them.
 """
 
 import logging
-import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -19,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RuleMatch:
     """Result of a rule match evaluation."""
+
     matched: bool
     rule_id: str
     rule_name: str
@@ -33,6 +33,7 @@ class RuleMatch:
 @dataclass
 class WAFRuleDefinition:
     """Parsed WAF rule definition."""
+
     id: str
     name: str
     description: str
@@ -79,10 +80,7 @@ class RuleEngine:
 
     def load_rules_from_directory(self, rules_dir: str | Path | None = None) -> int:
         """Load all YAML rule files from the specified directory."""
-        if rules_dir is None:
-            rules_dir = Path(__file__).parent / "rules"
-        else:
-            rules_dir = Path(rules_dir)
+        rules_dir = Path(__file__).parent / "rules" if rules_dir is None else Path(rules_dir)
 
         if not rules_dir.exists():
             logger.warning(f"Rules directory not found: {rules_dir}")
@@ -111,7 +109,7 @@ class RuleEngine:
     def _load_rules_from_file(self, filepath: Path) -> int:
         """Load rules from a single YAML file."""
         try:
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
             if not data or "rules" not in data:

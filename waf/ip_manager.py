@@ -4,8 +4,6 @@ Manages IP blacklists, whitelists, and GeoIP-based blocking using Redis.
 """
 
 import logging
-import time
-from datetime import datetime, timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -43,9 +41,7 @@ class IPManager:
         try:
             await self.redis.sadd(self.BLACKLIST_KEY, ip)
             if reason:
-                await self.redis.set(
-                    f"{self.REPUTATION_PREFIX}{ip}:reason", reason, ex=ttl
-                )
+                await self.redis.set(f"{self.REPUTATION_PREFIX}{ip}:reason", reason, ex=ttl)
             logger.info(f"IP blacklisted: {ip} — {reason}")
         except Exception as e:
             logger.error(f"Blacklist add error: {e}")
@@ -115,15 +111,11 @@ class IPManager:
             logger.error(f"Threat count fetch error: {e}")
             return 0
 
-    async def auto_block_if_threshold(
-        self, ip: str, threshold: int = 10
-    ) -> bool:
+    async def auto_block_if_threshold(self, ip: str, threshold: int = 10) -> bool:
         """Auto-block an IP if it exceeds the threat threshold."""
         count = await self.get_threat_count(ip)
         if count >= threshold:
-            await self.add_to_blacklist(
-                ip, reason=f"Auto-blocked: {count} threats detected"
-            )
+            await self.add_to_blacklist(ip, reason=f"Auto-blocked: {count} threats detected")
             return True
         return False
 

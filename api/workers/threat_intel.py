@@ -6,7 +6,7 @@ Integrates with VirusTotal, AbuseIPDB, and OpenPhish (mock or real).
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 
@@ -29,7 +29,7 @@ def analyze_domain(self, domain_id: str, domain: str):
         "virustotal": None,
         "abuseipdb": None,
         "openphish": None,
-        "analyzed_at": datetime.now(timezone.utc).isoformat(),
+        "analyzed_at": datetime.now(UTC).isoformat(),
     }
 
     # ──── VirusTotal Lookup ────
@@ -57,10 +57,7 @@ def analyze_domain(self, domain_id: str, domain: str):
     # Update the database record
     _update_domain_record(domain_id, results, risk_score)
 
-    logger.info(
-        f"[ThreatIntel] Domain analysis complete: {domain} — "
-        f"Risk Score: {risk_score}"
-    )
+    logger.info(f"[ThreatIntel] Domain analysis complete: {domain} — Risk Score: {risk_score}")
     return results
 
 
@@ -76,7 +73,7 @@ def _query_virustotal(domain: str) -> dict:
             "total_scanners": 70,
             "categories": ["phishing", "malware"],
             "reputation_score": -15,
-            "last_analysis_date": datetime.now(timezone.utc).isoformat(),
+            "last_analysis_date": datetime.now(UTC).isoformat(),
             "community_votes": {"harmless": 2, "malicious": 8},
         }
 
@@ -173,7 +170,7 @@ def _check_openphish(domain: str) -> dict:
         "mode": "mock",
         "is_phishing": is_phishing,
         "feed_size": len(known_phishing),
-        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "checked_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -214,6 +211,7 @@ def _update_domain_record(domain_id: str, results: dict, risk_score: float):
     """Update the phishing domain record in the database."""
     try:
         from sqlalchemy.orm import Session
+
         from api.core.database import build_sync_engine
         from api.models.phishing_domain import PhishingDomain
 
@@ -242,6 +240,7 @@ def cleanup_expired_blocks():
     try:
         from sqlalchemy import delete
         from sqlalchemy.orm import Session
+
         from api.core.database import build_sync_engine
         from api.models.blocked_ip import BlockedIP
 
@@ -251,7 +250,7 @@ def cleanup_expired_blocks():
             result = session.execute(
                 delete(BlockedIP).where(
                     BlockedIP.is_permanent == False,
-                    BlockedIP.blocked_until < datetime.now(timezone.utc),
+                    BlockedIP.blocked_until < datetime.now(UTC),
                 )
             )
             session.commit()
