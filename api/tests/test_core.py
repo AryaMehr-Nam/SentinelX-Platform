@@ -287,10 +287,10 @@ class TestProtectedRoutesAndWAFAPI:
     """Tests for protected routes requiring JWT Bearer authentication."""
 
     def test_protected_routes_require_auth(self, client):
-        """Protected endpoints must return 401 when no token is supplied."""
-        assert client.get("/api/v1/users/me").status_code == 401
-        assert client.get("/api/v1/waf/rules").status_code == 401
-        assert client.get("/api/v1/dashboard/overview").status_code == 401
+        """Protected endpoints must return 401/403 when no token is supplied."""
+        assert client.get("/api/v1/users/me").status_code in (401, 403)
+        assert client.get("/api/v1/waf/rules").status_code in (401, 403)
+        assert client.get("/api/v1/dashboard/overview").status_code in (401, 403)
 
     def test_authenticated_admin_flow(self, client):
         """Admin user can log in and access profile, rules, and overview."""

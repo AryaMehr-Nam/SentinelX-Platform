@@ -122,17 +122,24 @@ ROLE_HIERARCHY = {
     UserRole.VIEWER: 1,
 }
 
-security_scheme = HTTPBearer(auto_error=True)
+security_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """
     FastAPI dependency to extract and validate the current user from JWT.
     Returns a dict with user_id and role.
     """
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     payload = decode_token(credentials.credentials)
 
     if payload.get("type") != TokenType.ACCESS:
