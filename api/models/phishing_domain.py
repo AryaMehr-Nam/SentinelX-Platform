@@ -23,9 +23,7 @@ class PhishingDomain(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", index=True)
     threat_intel_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     risk_score: Mapped[float | None] = mapped_column(Float, nullable=True)
-    reviewed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     def __repr__(self) -> str:
         return f"<PhishingDomain {self.domain} status={self.status}>"
