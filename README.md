@@ -17,6 +17,25 @@ SentinelX is a full-stack cybersecurity platform that combines a high-performanc
 
 ---
 
+## 📸 Interface Showcase
+
+### 1. Real-Time SOC Dashboard & Threat Telemetry
+*Global risk scoring, live request volume, 24h threat trends, and top attack category distributions.*
+
+![SentinelX SOC Dashboard Overview](docs/screenshots/dashboard_overview.png)
+
+### 2. Live Attack Stream & Event Correlation
+*Granular real-time packet inspection, threat classification, IP reputation badges, and mitigation actions.*
+
+![SentinelX Live Attack Stream](docs/screenshots/attack_stream.png)
+
+### 3. Threat Intelligence Hub & AI Summaries
+*Multi-source threat aggregation (VirusTotal, AbuseIPDB, OpenPhish) with automated AI incident analysis.*
+
+![SentinelX Threat Intelligence Hub](docs/screenshots/threat_intel.png)
+
+---
+
 ## 🏗️ Architecture
 
 ```
